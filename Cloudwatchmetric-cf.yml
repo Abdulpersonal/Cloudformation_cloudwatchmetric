@@ -1,0 +1,40 @@
+Resources:
+#create custom metric for log group
+    cloudformationmetricname: 
+      Type: AWS::Logs::MetricFilter
+      Properties: 
+        LogGroupName: "ecs/staircase-pythongame-group"
+        FilterPattern: "?Forbidden ?403"
+        MetricTransformations: 
+          - 
+            MetricValue: "1"
+            MetricNamespace: "custommetric-cloudformation"
+            MetricName: "cloudformationmetricname"
+                   
+ # Create SNS and email subscription
+    MySNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        Subscription:
+           - 
+              Endpoint: "abdul@ideas2it.com"
+              Protocol: email
+
+  #create cloudwatch alarm for custom metric          
+    UnauthorizedApiCallsAlarm:
+        Type: AWS::CloudWatch::Alarm
+        DependsOn: cloudformationmetricname
+        Properties:
+            AlarmName: UnauthorizedApiCallsAlarm
+            AlarmActions: 
+            - Ref: MySNSTopic
+            MetricName: cloudformationmetricname
+            Namespace: custommetric-cloudformation
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            EvaluationPeriods: '1'
+            Period: '10'
+            Statistic: Sum
+            Threshold: '1'
+            TreatMissingData: notBreaching
+    
+  
